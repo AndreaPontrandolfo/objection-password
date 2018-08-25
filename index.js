@@ -1,18 +1,16 @@
 'use strict';
 
-const Bcrypt = require('bcrypt');
+const Upash = require('upash');
 
-const RECOMMENDED_ROUNDS = 12;
-
-const REGEXP = /^\$2[ayb]\$[0-9]{2}\$[A-Za-z0-9./]{53}$/;
+// Install the algorithm of your choice.
+Upash.install('argon2', require('@phc/argon2'));
 
 module.exports = (options) => {
 
     // Provide good defaults for the options if possible.
     options = Object.assign({
         allowEmptyPassword: false,
-        passwordField: 'password',
-        rounds: RECOMMENDED_ROUNDS
+        passwordField: 'password'
     }, options);
 
     // Return the mixin. If your plugin doesn't take options, you can simply export
@@ -46,16 +44,16 @@ module.exports = (options) => {
             }
 
             /**
-             * Compares a password to a Bcrypt hash
+             * Compares a password to a argon2 hash
              * @param  {String}             password  the password...
              * @return {Promise.<Boolean>}            whether or not the password was verified
              */
             verifyPassword(password) {
-                return Bcrypt.compare(password, this[options.passwordField]);
+                return Upash.verify(password, this[options.passwordField]);
             }
 
             /**
-             * Generates a Bcrypt hash
+             * Generates a argon2 hash
              * @return {Promise.<(String|void)>}  returns the hash or null
              */
             generateHash() {
@@ -63,14 +61,10 @@ module.exports = (options) => {
                 const password = this[options.passwordField];
 
                 if (password) {
-
-                    if (this.constructor.isBcryptHash(password)) {
-                        throw new Error('bcrypt tried to hash another bcrypt hash');
-                    }
-
-                    return Bcrypt.hash(password, options.rounds).then((hash) => {
-                        this[options.passwordField] = hash;
-                    });
+                    return Upash.hash(password)
+                        .then((hash) => {
+                            this[options.passwordField] = hash;
+                        });
                 }
 
                 // throw an error if empty passwords aren't allowed
@@ -79,16 +73,6 @@ module.exports = (options) => {
                 }
 
                 return Promise.resolve();
-            }
-
-
-            /**
-             * Detect rehashing for avoiding undesired effects
-             * @param {String} str A string to be checked
-             * @return {Boolean} True if the str seems to be a bcrypt hash
-             */
-            static isBcryptHash(str) {
-                return REGEXP.test(str);
             }
         };
 

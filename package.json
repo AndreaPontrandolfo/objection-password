@@ -17,7 +17,8 @@
   },
   "homepage": "https://github.com/scoutforpets/objection-password#readme",
   "dependencies": {
-    "bcrypt": "^1.0.2"
+    "@phc/argon2": "^1.0.9",
+    "upash": "^1.0.2"
   },
   "devDependencies": {
     "ava": "^0.25.0",
